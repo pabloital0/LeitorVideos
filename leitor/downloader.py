@@ -1,31 +1,27 @@
 from pytube import YouTube
-import os
+from pytube.exceptions import VideoUnavailable
+import re
 
-def baixar_video(url: str, pasta_destino: str = "videos") -> str:
-    """
-    Baixa o vídeo do YouTube na pasta_destino e retorna o caminho do arquivo salvo.
-    
-    Args:
-        url (str): URL do vídeo do YouTube.
-        pasta_destino (str): Pasta onde o vídeo será salvo (default "videos").
-    
-    Returns:
-        str: Caminho completo do arquivo baixado.
-    """
-    # Cria a pasta destino se não existir
-    if not os.path.exists(pasta_destino):
-        os.makedirs(pasta_destino)
+def baixar_video(url):
+    try:
+        # Valida a URL básica do YouTube
+        if not re.match(r'(https?://)?(www\.)?(youtube\.com|youtu\.be)/', url):
+            raise ValueError("URL inválida")
 
-    yt = YouTube(url)
+        yt = YouTube(url)
+        stream = yt.streams.filter(progressive=True, file_extension="mp4").order_by("resolution").desc().first()
 
-    # Seleciona o stream com melhor qualidade progressiva (vídeo + áudio)
-    stream = yt.streams.filter(progressive=True, file_extension="mp4").order_by("resolution").desc().first()
+        if stream is None:
+            print("Nenhum stream progressivo MP4 disponível.")
+            return None
 
-    if not stream:
-        raise Exception("Nenhum stream mp4 progressivo disponível para este vídeo.")
+        print(f"Baixando: {yt.title}")
+        caminho = stream.download(output_path="videos")
+        return caminho
 
-    print(f"Baixando: {yt.title}")
-    caminho_arquivo = stream.download(output_path=pasta_destino)
-    
-    print(f"Vídeo salvo em: {caminho_arquivo}")
-    return caminho_arquivo
+    except VideoUnavailable:
+        print("Vídeo indisponível.")
+        return None
+    except Exception as e:
+        print("Erro ao tentar baixar o vídeo:", e)
+        return None
