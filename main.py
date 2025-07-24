@@ -1,30 +1,25 @@
 import yt_dlp
 import os
-
-def baixar_video(url):
-    try:
-        os.makedirs("videos", exist_ok=True)
-
-        ydl_opts = {
-            'outtmpl': 'videos/%(title)s.%(ext)s',
-            'format': 'mp4',
-        }
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            print(f"Download concluído: {info['title']}")
-            return info['title']
-    except Exception as e:
-        print("Erro ao tentar baixar o vídeo:", e)
-        return None
+from leitor.downloader import baixar_video, baixar_audio
 
 def main():
-    url = input("Cole a URL do vídeo para baixar: ").strip()
-    titulo = baixar_video(url)
-    if titulo:
-        print("✅ Download concluído com sucesso!")
+    escolha = input("Quer baixar vídeo (v) ou áudio (a)? ").strip().lower()
+    url = input("Cole a URL do vídeo: ").strip()
+
+    if escolha == "v":
+        caminho = baixar_video(url)
+        if caminho:
+            print(f"Vídeo baixado em: {caminho}")
+        else:
+            print("Falha no download do vídeo.")
+    elif escolha == "a":
+        caminho = baixar_audio(url)
+        if caminho:
+            print(f"Áudio baixado em: {caminho}")
+        else:
+            print("Falha no download do áudio.")
     else:
-        print("❌ Falha no download.")
+        print("Opção inválida.")
 
 if __name__ == "__main__":
     main()
