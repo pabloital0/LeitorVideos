@@ -3,6 +3,12 @@ from pytube.exceptions import VideoUnavailable
 import re
 import os
 import yt_dlp
+import unicodedata
+
+def limpar_nome_arquivo(nome):
+    nome = unicodedata.normalize('NFKD', nome).encode('ASCII', 'ignore').decode('ASCII')
+    return "".join(c if c.isalnum() or c in " -_." else "_" for c in nome)
+
 
 def baixar_video(url):
     try:
@@ -30,40 +36,30 @@ def baixar_video(url):
     
     
 def baixar_audio(url):
-    try:
-        # Cria pasta 'audios' se não existir
-        os.makedirs("audios", exist_ok=True)
-        
-        # Coleta info primeiro (sem baixar ainda)
-        with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
-            info = ydl.extract_info(url, download=False)
-            titulo = info.get("title", "audio").strip()
-            # Remove caracteres problemáticos no nome do arquivo
-            titulo_limpo = re.sub(r'[\\/*?:"<>|,]', "", titulo)
-        
-        nome_arquivo = f"{titulo_limpo}.mp3"
-        caminho_saida = os.path.join("audios", nome_arquivo)
-        
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': 'audios/%(title)s.%(ext)s',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-            'quiet': True,
-            'no_warnings': True,
-            # Informar o caminho do FFmpeg aqui:
-            'ffmpeg_location': r'C:\ffmpeg\bin',
-        }
-        
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
+    import os
+    from yt_dlp import YoutubeDL
 
-        print(f"Áudio salvo: {nome_arquivo}")
-        return caminho_saida
+    pasta = "audios"
+    nome_base = "audio_baixado"
+    caminho_base = os.path.join(pasta, nome_base)
+    nome_arquivo_final = f"{caminho_base}.mp3"
 
-    except Exception as e:
-        print("Erro ao tentar baixar o áudio:", e)
-        return None
+    os.makedirs(pasta, exist_ok=True)
+
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': caminho_base + '.%(ext)s',  # salva como .webm
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+        'ffmpeg_location': 'C:/ffmpeg/bin'  # caminho do ffmpeg
+    }
+
+    with YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+
+    # Garante que retorna o nome final corretamente:
+    return os.path.abspath(nome_arquivo_final)
+    return str(Path(output_path).resolve())
