@@ -34,6 +34,16 @@ def baixar_audio(url):
         # Cria pasta 'audios' se não existir
         os.makedirs("audios", exist_ok=True)
         
+        # Coleta info primeiro (sem baixar ainda)
+        with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+            info = ydl.extract_info(url, download=False)
+            titulo = info.get("title", "audio").strip()
+            # Remove caracteres problemáticos no nome do arquivo
+            titulo_limpo = re.sub(r'[\\/*?:"<>|,]', "", titulo)
+        
+        nome_arquivo = f"{titulo_limpo}.mp3"
+        caminho_saida = os.path.join("audios", nome_arquivo)
+        
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': 'audios/%(title)s.%(ext)s',
@@ -49,11 +59,11 @@ def baixar_audio(url):
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            print(f"Áudio salvo: audios/{info['title']}.mp3")
-            return os.path.join("audios", info['title'] + ".mp3")
+            ydl.download([url])
+
+        print(f"Áudio salvo: {nome_arquivo}")
+        return caminho_saida
 
     except Exception as e:
         print("Erro ao tentar baixar o áudio:", e)
         return None
-        

@@ -1,6 +1,7 @@
 import yt_dlp
 import os
 from leitor.downloader import baixar_video, baixar_audio
+from transcrever import transcrever_audio
 
 def main():
     escolha = input("Quer baixar vídeo (v) ou áudio (a)? ").strip().lower()
@@ -16,6 +17,7 @@ def main():
         caminho = baixar_audio(url)
         if caminho:
             print(f"Áudio baixado em: {caminho}")
+            transcrever_audio(caminho)  # Transcreve o áudio baixado
         else:
             print("Falha no download do áudio.")
     else:
